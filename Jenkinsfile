@@ -60,10 +60,10 @@ pipeline {
     }
 
     post {
-        always {
-            // Publish test results
-            junit testResultsPattern: "${BUILD_DIR}/${TEST_RESULTS_DIR}/test-results.xml", allowEmptyResults: true
-        }
+        // always {
+        //     // Publish test results
+        //     junit testResultsPattern: "${BUILD_DIR}/${TEST_RESULTS_DIR}/test-results.xml", allowEmptyResults: true
+        // }
         success {
             echo 'Pipeline succeeded!'
         }
