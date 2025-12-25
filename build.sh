@@ -15,23 +15,18 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 echo "Building..."
 cmake --build . --config Release
 
-# Run tests
+# Run tests with XML output
 echo "Running tests..."
-./bin/DemoAllureProjectTests --gtest_output=xml:test-results.xml || true
+mkdir -p test-results
+./bin/DemoAllureProjectTests --gtest_output=xml:test-results/test-results.xml || true
 
-# Generate Allure report if allure command is available
-if command -v allure &> /dev/null; then
-    echo "Generating Allure report..."
-    if [ -d "allure-results" ] && [ "$(ls -A allure-results)" ]; then
-        allure generate allure-results -o allure-report --clean
-        echo "Allure report generated in build/allure-report"
-        echo "To view: allure open build/allure-report"
-    else
-        echo "Warning: No Allure results found"
-    fi
+# Display results
+if [ -f "test-results/test-results.xml" ]; then
+    echo "Test results XML generated: test-results/test-results.xml"
+    echo "File contents:"
+    head -20 test-results/test-results.xml
 else
-    echo "Allure commandline not found. Install it to generate reports."
+    echo "Warning: Test results XML not found"
 fi
 
 echo "Build complete!"
-

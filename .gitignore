@@ -32,9 +32,8 @@ _deps/
 .vscode/
 *.code-workspace
 
-## Allure results and reports
-allure-results/
-allure-report/
+## Test results
+test-results/
 *.trx
 test-results.xml
 

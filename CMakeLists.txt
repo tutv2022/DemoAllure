@@ -34,17 +34,12 @@ else()
     FetchContent_MakeAvailable(googletest)
 endif()
 
-# Allure integration is handled by AllureHelper class
-# No external Allure C++ library needed
-
 # Test executable
 add_executable(
     DemoAllureProjectTests
     tests/CalculatorTests.cpp
     tests/StringOperationTests.cpp
     tests/main.cpp
-    tests/AllureHelper.cpp
-    tests/AllureTestListener.cpp
 )
 
 target_link_libraries(

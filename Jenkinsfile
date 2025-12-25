@@ -2,9 +2,8 @@ pipeline {
     agent any
 
     environment {
-        ALLURE_RESULTS = 'allure-results'
-        ALLURE_REPORT = 'allure-report'
         BUILD_DIR = 'build'
+        TEST_RESULTS_DIR = 'test-results'
     }
 
     stages {
@@ -42,20 +41,17 @@ pipeline {
                 script {
                     sh '''
                         cd ${BUILD_DIR}
-                        # Run tests and generate Allure results
-                        # Allure results are generated in allure-results directory by the test executable
-                        ./bin/DemoAllureProjectTests --gtest_output=xml:test-results.xml || true
+                        mkdir -p ${TEST_RESULTS_DIR}
                         
-                        # Ensure allure-results directory exists
-                        if [ ! -d "allure-results" ]; then
-                            mkdir -p allure-results
-                        fi
+                        # Run tests and generate XML output
+                        ./bin/DemoAllureProjectTests --gtest_output=xml:${TEST_RESULTS_DIR}/test-results.xml || true
                         
-                        # Copy results to project root if needed
-                        if [ -d "allure-results" ] && [ "$(ls -A allure-results)" ]; then
-                            echo "Allure results found: $(ls -la allure-results | head -5)"
+                        # Verify XML file was created
+                        if [ -f "${TEST_RESULTS_DIR}/test-results.xml" ]; then
+                            echo "Test results XML generated: ${TEST_RESULTS_DIR}/test-results.xml"
+                            echo "File size: $(wc -l < ${TEST_RESULTS_DIR}/test-results.xml) lines"
                         else
-                            echo "Warning: No Allure results generated"
+                            echo "Warning: Test results XML not found"
                         fi
                     '''
                 }
@@ -65,21 +61,8 @@ pipeline {
 
     post {
         always {
-            script {
-                // Publish Allure report
-                // Try build directory first, then project root
-                def resultsPath = fileExists("${BUILD_DIR}/allure-results") ? 
-                    "${BUILD_DIR}/allure-results" : 
-                    (fileExists('allure-results') ? 'allure-results' : "${BUILD_DIR}/allure-results")
-                
-                allure([
-                    includeProperties: false,
-                    jdk: '',
-                    properties: [],
-                    reportBuildPolicy: 'ALWAYS',
-                    results: [[path: resultsPath]]
-                ])
-            }
+            // Publish test results
+            junit testResultsPattern: "${BUILD_DIR}/${TEST_RESULTS_DIR}/test-results.xml", allowEmptyResults: true
         }
         success {
             echo 'Pipeline succeeded!'
