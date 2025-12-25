@@ -55,24 +55,24 @@ pipeline {
             }
         }
 
-        stage('Generate Allure Report') {
-            steps {
-                script {
-                    dir('DemoAllureProject.Tests') {
-                        // Generate Allure report from results
-                        sh '''
-                            if [ -d "allure-results" ] && [ "$(ls -A allure-results)" ]; then
-                                allure generate allure-results -o allure-report --clean
-                            elif [ -d "bin/Debug/net8.0/allure-results" ] && [ "$(ls -A bin/Debug/net8.0/allure-results)" ]; then
-                                allure generate bin/Debug/net8.0/allure-results -o allure-report --clean
-                            else
-                                echo "No allure-results directory found"
-                            fi
-                        '''
-                    }
-                }
-            }
-        }
+        // stage('Generate Allure Report') {
+        //     steps {
+        //         script {
+        //             dir('DemoAllureProject.Tests') {
+        //                 // Generate Allure report from results
+        //                 sh '''
+        //                     if [ -d "allure-results" ] && [ "$(ls -A allure-results)" ]; then
+        //                         allure generate allure-results -o allure-report --clean
+        //                     elif [ -d "bin/Debug/net8.0/allure-results" ] && [ "$(ls -A bin/Debug/net8.0/allure-results)" ]; then
+        //                         allure generate bin/Debug/net8.0/allure-results -o allure-report --clean
+        //                     else
+        //                         echo "No allure-results directory found"
+        //                     fi
+        //                 '''
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     post {
