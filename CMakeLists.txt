@@ -17,15 +17,22 @@ set(SOURCES
 # Create library
 add_library(DemoAllureProjectLib ${SOURCES})
 
-# GoogleTest
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9fd7189c2b4b0c8b8e2c4e0.zip
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+# GoogleTest - Try to find system-installed version first
+find_package(GTest QUIET)
+
+if(GTest_FOUND)
+    message(STATUS "Using system-installed GoogleTest")
+else()
+    message(STATUS "GoogleTest not found in system, downloading via FetchContent...")
+    include(FetchContent)
+    FetchContent_Declare(
+      googletest
+      URL https://github.com/google/googletest/archive/03597a01ee50ed33e9fd7189c2b4b0c8b8e2c4e0.zip
+    )
+    # For Windows: Prevent overriding the parent project's compiler/linker settings
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+endif()
 
 # Allure integration is handled by AllureHelper class
 # No external Allure C++ library needed
