@@ -4,6 +4,7 @@ pipeline {
     environment {
         ALLURE_RESULTS = 'allure-results'
         ALLURE_REPORT = 'allure-report'
+        BUILD_DIR = 'build'
     }
 
     stages {
@@ -13,12 +14,14 @@ pipeline {
             }
         }
 
-        stage('Restore') {
+        stage('Configure') {
             steps {
                 script {
-                    dir('DemoAllureProject.Tests') {
-                        sh '/usr/bin/dotnet restore'
-                    }
+                    sh '''
+                        mkdir -p ${BUILD_DIR}
+                        cd ${BUILD_DIR}
+                        cmake .. -DCMAKE_BUILD_TYPE=Release
+                    '''
                 }
             }
         }
@@ -26,9 +29,10 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    dir('DemoAllureProject.Tests') {
-                        sh '/usr/bin/dotnet build --no-restore'
-                    }
+                    sh '''
+                        cd ${BUILD_DIR}
+                        cmake --build . --config Release
+                    '''
                 }
             }
         }
@@ -36,61 +40,46 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    dir('DemoAllureProject.Tests') {
-                        // Run tests and generate Allure results
-                        // Allure results are generated in bin/Debug/net8.0/allure-results by default
-                        sh '''
-                            /usr/bin/dotnet test --no-build --verbosity normal \
-                                --logger "trx;LogFileName=test-results.trx"
-                        '''
-                        // Copy Allure results to project root for easier access
-                        sh '''
-                            if [ -d "bin/Debug/net8.0/allure-results" ]; then
-                                mkdir -p allure-results
-                                cp -r bin/Debug/net8.0/allure-results/* allure-results/ || true
-                            fi
-                        '''
-                    }
+                    sh '''
+                        cd ${BUILD_DIR}
+                        # Run tests and generate Allure results
+                        # Allure results are generated in allure-results directory by the test executable
+                        ./bin/DemoAllureProjectTests --gtest_output=xml:test-results.xml || true
+                        
+                        # Ensure allure-results directory exists
+                        if [ ! -d "allure-results" ]; then
+                            mkdir -p allure-results
+                        fi
+                        
+                        # Copy results to project root if needed
+                        if [ -d "allure-results" ] && [ "$(ls -A allure-results)" ]; then
+                            echo "Allure results found: $(ls -la allure-results | head -5)"
+                        else
+                            echo "Warning: No Allure results generated"
+                        fi
+                    '''
                 }
             }
         }
-
-        // stage('Generate Allure Report') {
-        //     steps {
-        //         script {
-        //             dir('DemoAllureProject.Tests') {
-        //                 // Generate Allure report from results
-        //                 sh '''
-        //                     if [ -d "allure-results" ] && [ "$(ls -A allure-results)" ]; then
-        //                         allure generate allure-results -o allure-report --clean
-        //                     elif [ -d "bin/Debug/net8.0/allure-results" ] && [ "$(ls -A bin/Debug/net8.0/allure-results)" ]; then
-        //                         allure generate bin/Debug/net8.0/allure-results -o allure-report --clean
-        //                     else
-        //                         echo "No allure-results directory found"
-        //                     fi
-        //                 '''
-        //             }
-        //         }
-        //     }
-        // }
     }
 
     post {
         always {
-                script {
-                    dir('DemoAllureProject.Tests') {
-                        // Publish Allure report
-                        // Try allure-results first, fallback to bin directory
-                        def resultsPath = fileExists('allure-results') ? 'allure-results' : 'bin/Debug/net8.0/allure-results'
-                        allure([
-                            includeProperties: false,
-                            jdk: '',
-                            properties: [],
-                            reportBuildPolicy: 'ALWAYS',
-                            results: [[path: resultsPath]]
-                        ])
-                    }
-                }
+            script {
+                // Publish Allure report
+                // Try build directory first, then project root
+                def resultsPath = fileExists("${BUILD_DIR}/allure-results") ? 
+                    "${BUILD_DIR}/allure-results" : 
+                    (fileExists('allure-results') ? 'allure-results' : "${BUILD_DIR}/allure-results")
+                
+                allure([
+                    includeProperties: false,
+                    jdk: '',
+                    properties: [],
+                    reportBuildPolicy: 'ALWAYS',
+                    results: [[path: resultsPath]]
+                ])
+            }
         }
         success {
             echo 'Pipeline succeeded!'
@@ -100,4 +89,3 @@ pipeline {
         }
     }
 }
-
