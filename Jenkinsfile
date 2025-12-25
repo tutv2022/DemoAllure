@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        dotnet 'dotnet' // Configure this in Jenkins Global Tool Configuration
-    }
-
     environment {
         ALLURE_RESULTS = 'allure-results'
         ALLURE_REPORT = 'allure-report'
@@ -21,7 +17,7 @@ pipeline {
             steps {
                 script {
                     dir('DemoAllureProject.Tests') {
-                        sh 'dotnet restore'
+                        sh '/usr/bin/dotnet restore'
                     }
                 }
             }
@@ -31,7 +27,7 @@ pipeline {
             steps {
                 script {
                     dir('DemoAllureProject.Tests') {
-                        sh 'dotnet build --no-restore'
+                        sh '/usr/bin/dotnet build --no-restore'
                     }
                 }
             }
@@ -44,7 +40,7 @@ pipeline {
                         // Run tests and generate Allure results
                         // Allure results are generated in bin/Debug/net8.0/allure-results by default
                         sh '''
-                            dotnet test --no-build --verbosity normal \
+                            /usr/bin/dotnet test --no-build --verbosity normal \
                                 --logger "trx;LogFileName=test-results.trx"
                         '''
                         // Copy Allure results to project root for easier access
