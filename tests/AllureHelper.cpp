@@ -74,12 +74,6 @@ std::string AllureHelper::EscapeJsonString(const std::string& str) {
     return ss.str();
 }
 
-std::string AllureHelper::GetCurrentTimestamp() {
-    auto now = std::chrono::system_clock::now();
-    auto time = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-    return std::to_string(time);
-}
-
 void AllureHelper::SetSuite(const std::string& suite) {
     currentSuite = suite;
 }
